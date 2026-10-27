@@ -20,6 +20,7 @@ import type {
 import { formatProviderError, normalizeProviderError } from "../utils/error-body.ts";
 import { headersToRecord, providerHeadersToRecord } from "../utils/headers.ts";
 import { type ClientIdentity, getIdentityHeaders } from "../utils/identity.ts";
+import { getImageUrl } from "../utils/image-content.ts";
 import { retryProviderRequest } from "../utils/provider-retry.ts";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.ts";
 
@@ -148,7 +149,7 @@ function buildParams(model: ImageModel<ImageApi>, context: ImagesContext): OpenR
 		return {
 			type: "image_url",
 			image_url: {
-				url: `data:${item.mimeType};base64,${item.data}`,
+				url: getImageUrl(item),
 			},
 		} satisfies ChatCompletionContentPartImage;
 	});

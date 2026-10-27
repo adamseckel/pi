@@ -40,6 +40,7 @@ import { AssistantMessageEventStream } from "../utils/event-stream.ts";
 import { shortHash } from "../utils/hash.ts";
 import { headersToRecord } from "../utils/headers.ts";
 import { type ClientIdentity, getIdentityHeaders } from "../utils/identity.ts";
+import { getImageUrl } from "../utils/image-content.ts";
 import {
 	applyOpenRouterReportedCost,
 	isOpenRouterModel,
@@ -1266,7 +1267,7 @@ export function convertMessages(
 							return {
 								type: "image_url",
 								image_url: {
-									url: `data:${item.mimeType};base64,${item.data}`,
+									url: getImageUrl(item),
 								},
 							} satisfies ChatCompletionContentPartImage;
 						}
@@ -1426,7 +1427,7 @@ export function convertMessages(
 							imageBlocks.push({
 								type: "image_url",
 								image_url: {
-									url: `data:${block.mimeType};base64,${block.data}`,
+									url: getImageUrl(block),
 								},
 							});
 						}

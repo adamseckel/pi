@@ -15,7 +15,7 @@ import { mkdtemp, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
-import type { ImageContent } from "@earendil-works/pi-ai";
+import type { Base64ImageContent } from "@earendil-works/pi-ai";
 import { createModels } from "@earendil-works/pi-ai/models";
 import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@earendil-works/pi-ai/providers/faux";
 import { Type } from "typebox";
@@ -108,7 +108,7 @@ function registryFor(scenario: Scenario, probe: Probe) {
 		name: "read_image",
 		description: "Read an image",
 		parameters: Type.Object({ n: Type.Number() }),
-		// One image, so programs get it as an `ImageContent`. Unique per call: base64 of random bytes.
+		// One image, so programs get it as an `Base64ImageContent`. Unique per call: base64 of random bytes.
 		execute: async () => ({
 			output: [
 				{ type: "image", data: randomBytes((scenario.bytes / 4) * 3).toString("base64"), mimeType: "image/png" },
@@ -130,7 +130,7 @@ function registryFor(scenario: Scenario, probe: Probe) {
 					const source = (await api.getTask(image.source.taskId as TaskId, callContext))?.input as ToolTaskInput;
 					if (source.kind !== "nested") throw new Error("A reference names a nested call");
 					const stored = await api.snapshot(NestedCallDoc, input.parent, source.key, callContext);
-					const block = stored?.result?.structuredOutput as ImageContent | undefined;
+					const block = stored?.result?.structuredOutput as Base64ImageContent | undefined;
 					data = block?.type === "image" ? block.data : undefined;
 				}
 				if (data?.length !== scenario.bytes) throw new Error(`Image has ${data?.length} characters`);
@@ -147,7 +147,7 @@ function registryFor(scenario: Scenario, probe: Probe) {
 			for (let n = 0; n < args.count; n++) {
 				const key = `read${n}`;
 				const read = await api.executeTool("read_image", { n }, callContext, { key });
-				const image = read.structuredOutput as unknown as ImageContent;
+				const image = read.structuredOutput as unknown as Base64ImageContent;
 				const argument: JsonObject =
 					scenario.variant === "inline"
 						? { type: "image", data: image.data, mimeType: image.mimeType }

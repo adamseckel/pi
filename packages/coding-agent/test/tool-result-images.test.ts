@@ -1,4 +1,5 @@
 import { crc32, deflateSync } from "node:zlib";
+import { isUrlImage } from "@earendil-works/pi-ai/utils/image-content";
 import { describe, expect, it } from "vitest";
 import type { ToolResultContent } from "../src/utils/tool-result-images.ts";
 import { normalizeToolResultImages } from "../src/utils/tool-result-images.ts";
@@ -60,6 +61,12 @@ function imageBlock(bytes: Buffer, mimeType: string): ToolResultContent {
 }
 
 describe("normalizeToolResultImages", () => {
+	it("preserves URL image blocks without attempting to decode or resize them", async () => {
+		const content: ToolResultContent[] = [{ type: "image", url: "https://example.com/image.png" }];
+
+		expect(await normalizeToolResultImages(content)).toBe(content);
+	});
+
 	it("returns the original array when there are no image blocks", async () => {
 		const content: ToolResultContent[] = [{ type: "text", text: "no images here" }];
 
@@ -84,7 +91,7 @@ describe("normalizeToolResultImages", () => {
 		expect(normalized).toHaveLength(2);
 		const image = normalized[0];
 		expect(image.type).toBe("image");
-		if (image.type !== "image") return;
+		if (image.type !== "image" || isUrlImage(image)) return;
 		const { width, height } = readPngDimensions(image.data);
 		expect(width).toBeLessThanOrEqual(2000);
 		expect(height).toBeLessThanOrEqual(2000);

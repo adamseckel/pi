@@ -33,6 +33,7 @@ import type {
 } from "../types.ts";
 import type { AssistantMessageEventStream } from "../utils/event-stream.ts";
 import { shortHash } from "../utils/hash.ts";
+import { getImageUrl } from "../utils/image-content.ts";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.ts";
 import { ToolCallArgumentsStream } from "../utils/streaming-json.ts";
 import { getSystemMessageText, renderSystemMessageUpdate } from "../utils/text.ts";
@@ -103,7 +104,7 @@ function convertToolResultOutput<TApi extends Api>(
 		output.push({
 			type: "input_image",
 			detail: "auto",
-			image_url: `data:${image.mimeType};base64,${image.data}`,
+			image_url: getImageUrl(image),
 		});
 	}
 	return output;
@@ -314,7 +315,7 @@ export function convertResponsesMessages<TApi extends Api>(
 					return {
 						type: "input_image",
 						detail: "auto",
-						image_url: `data:${item.mimeType};base64,${item.data}`,
+						image_url: getImageUrl(item),
 					} satisfies ResponseInputImage;
 				});
 				if (content.length === 0) continue;

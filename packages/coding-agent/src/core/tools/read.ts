@@ -1,5 +1,5 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import type { Api, ImageContent, Model, ModelImageResizeOptions, TextContent } from "@earendil-works/pi-ai";
+import type { Api, Base64ImageContent, Model, ModelImageResizeOptions, TextContent } from "@earendil-works/pi-ai";
 import { constants } from "fs";
 import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import { type Static, Type } from "typebox";
@@ -70,7 +70,7 @@ export interface ReadToolOptions {
 }
 
 /** The image block and its note, or the text for text files and images that could not be processed. */
-function toReadOutput(content: (TextContent | ImageContent)[]): ReadToolOutput {
+function toReadOutput(content: (TextContent | Base64ImageContent)[]): ReadToolOutput {
 	const text = content.find((block) => block.type === "text")?.text ?? "";
 	const image = content.find((block) => block.type === "image");
 	return image ? { type: "image", data: image.data, mimeType: image.mimeType, note: text } : text;
@@ -106,7 +106,7 @@ export function createReadToolDefinition(
 			_onUpdate?,
 			ctx?: ExtensionContext,
 		) {
-			return new Promise<{ content: (TextContent | ImageContent)[]; details: ReadToolDetails | undefined }>(
+			return new Promise<{ content: (TextContent | Base64ImageContent)[]; details: ReadToolDetails | undefined }>(
 				(resolve, reject) => {
 					if (signal?.aborted) {
 						reject(new Error("Operation aborted"));
@@ -127,7 +127,7 @@ export function createReadToolDefinition(
 							await ops.access(absolutePath);
 							if (aborted) return;
 							const mimeType = ops.detectImageMimeType ? await ops.detectImageMimeType(absolutePath) : undefined;
-							let content: (TextContent | ImageContent)[];
+							let content: (TextContent | Base64ImageContent)[];
 							let details: ReadToolDetails | undefined;
 							const nonVisionImageNote = getNonVisionImageNote(ctx?.model);
 							if (mimeType) {

@@ -1,14 +1,15 @@
 import type {
+	Base64ImageContent,
 	ClassifierAnswer,
 	ClassifierApi,
 	ClassifierContext,
 	ClassifierModel,
 	ClassifierOptions,
 	ClassifierResult,
-	ImageContent,
 	SystemOneCompat,
 } from "../types.ts";
 import { formatProviderError, normalizeProviderError } from "../utils/error-body.ts";
+import { requireBase64Image } from "../utils/image-content.ts";
 import { isRecord, parseClassifierUsage, postClassifierRequest, requiredNumber } from "./classifier-shared.ts";
 
 /** A System One image asset: base64 file bytes, referenced by its name from the state. */
@@ -132,7 +133,7 @@ function addImages(
 	label: string,
 	model: ClassifierModel<ClassifierApi>,
 	input: SystemOneImageInput,
-	images: ImageContent[],
+	images: Base64ImageContent[],
 	request: SystemOneWireRequest,
 ): void {
 	if (input === "images") {
@@ -211,7 +212,13 @@ export async function classifySystemOne(
 			}
 			const detected = transport.detectCompat(model);
 			const imageInput = model.compat?.imageInput ?? detected.imageInput;
-			addImages(transport.label, model, imageInput, context.images, request);
+			addImages(
+				transport.label,
+				model,
+				imageInput,
+				context.images.map((image) => requireBase64Image(image, model.api)),
+				request,
+			);
 			if (model.compat?.sendImageOptInHeader ?? detected.sendImageOptInHeader) {
 				requestOptions = { ...options, headers: { ...IMAGE_OPT_IN_HEADERS, ...options?.headers } };
 			}

@@ -7,6 +7,7 @@ import type {
 	ClassifierResult,
 } from "../types.ts";
 import { formatProviderError, normalizeProviderError } from "../utils/error-body.ts";
+import { requireBase64Image } from "../utils/image-content.ts";
 import {
 	type ClassifierHttpError,
 	isRecord,
@@ -72,7 +73,7 @@ function wireQuestion(name: string, question: ClassifierQuestion): DecisionQuest
 
 function wireInput(context: ClassifierContext): unknown {
 	const state = JSON.stringify(context.state);
-	const images = context.images ?? [];
+	const images = (context.images ?? []).map((image) => requireBase64Image(image, "openai-decisions"));
 	if (images.length === 0) return state;
 	if (images.length > MAX_IMAGES) {
 		throw new Error(`${LABEL} accepts at most ${MAX_IMAGES} images, got ${images.length}`);

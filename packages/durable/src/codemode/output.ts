@@ -5,10 +5,10 @@
  * the token budget is cut to its start and end, with the complete text in a temp file; images are saved to temp files
  * too, with their path next to them, because a script has no other way to hand their bytes on.
  */
-import type { ImageContent, TextContent } from "@earendil-works/pi-ai";
+import type { Base64ImageContent, TextContent } from "@earendil-works/pi-ai";
 import type { CodemodeOutputItem, CodemodeResult } from "@earendil-works/pi-codemode/portable";
 
-type Item = TextContent | ImageContent;
+type Item = TextContent | Base64ImageContent;
 
 /** Writes a file of the result under a fixed name; its path, or why it could not be written. */
 export type OutputFile = (name: string, data: string | Uint8Array) => Promise<{ path: string } | { error: string }>;
@@ -128,7 +128,7 @@ async function truncate(
 /** Save each image to a file and put a text item with its path before it; an image shown twice is saved once. */
 async function saveImages(items: readonly Item[], write: OutputFile): Promise<Item[]> {
 	const labels = new Map<string, Promise<string>>();
-	const label = async ({ data, mimeType }: ImageContent, index: number): Promise<string> => {
+	const label = async ({ data, mimeType }: Base64ImageContent, index: number): Promise<string> => {
 		const bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
 		const kind = `${mimeType}, ${bytes.length} bytes`;
 		// A failed write must not discard the result of a script whose calls already ran: it becomes part of the label.

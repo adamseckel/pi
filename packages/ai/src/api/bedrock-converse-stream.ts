@@ -52,6 +52,7 @@ import { normalizeProviderError } from "../utils/error-body.ts";
 import { AssistantMessageEventStream } from "../utils/event-stream.ts";
 import { providerHeadersToRecord } from "../utils/headers.ts";
 import { type ClientIdentity, getClientVersion } from "../utils/identity.ts";
+import { requireBase64Image } from "../utils/image-content.ts";
 import { resolveHttpProxyUrlForTarget } from "../utils/node-http-proxy.ts";
 import { getProviderEnvValue } from "../utils/provider-env.ts";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.ts";
@@ -970,7 +971,7 @@ function convertToolResultContent(content: (TextContent | ImageContent)[]): Tool
 	const result: ToolResultContentBlock[] = [];
 	for (const c of content) {
 		if (c.type === "image") {
-			result.push({ image: createImageBlock(c.mimeType, c.data) });
+			result.push({ image: createImageBlock(c) });
 		} else {
 			const textBlock = createNonBlankTextBlock(c.text);
 			if (textBlock) result.push(textBlock);
@@ -1010,7 +1011,7 @@ function convertMessages(
 								break;
 							}
 							case "image":
-								content.push({ image: createImageBlock(c.mimeType, c.data) });
+								content.push({ image: createImageBlock(c) });
 								break;
 							default:
 								continue;
@@ -1118,7 +1119,7 @@ function convertMessages(
 					if (split) {
 						errorImages.push(
 							{ text: split.caption },
-							...split.images.map((image) => ({ image: createImageBlock(image.mimeType, image.data) })),
+							...split.images.map((image) => ({ image: createImageBlock(image) })),
 						);
 					}
 					j++;
@@ -1361,7 +1362,8 @@ const OPENAI_GPT_OSS_EFFORT: Record<ThinkingLevel, OpenAIGptOssEffort> = {
 	max: "high",
 };
 
-function createImageBlock(mimeType: string, data: string) {
+function createImageBlock(image: ImageContent) {
+	const { mimeType, data } = requireBase64Image(image, "bedrock-converse-stream");
 	let format: ImageFormat;
 	switch (mimeType) {
 		case "image/jpeg":

@@ -14,6 +14,7 @@ import type {
 	TextContent,
 	Usage,
 } from "@earendil-works/pi-ai";
+import { isUrlImage } from "@earendil-works/pi-ai/utils/image-content";
 import {
 	type CodemodeOutputItem,
 	type CodemodeResult,
@@ -413,7 +414,7 @@ const IMAGE_EXTENSIONS: Record<string, string> = {
  */
 async function saveImages(items: (TextContent | ImageContent)[]): Promise<(TextContent | ImageContent)[]> {
 	const labels = new Map<string, Promise<string>>();
-	const label = async ({ data, mimeType }: ImageContent): Promise<string> => {
+	const label = async ({ data, mimeType }: Extract<ImageContent, { data: string }>): Promise<string> => {
 		const bytes = Buffer.from(data, "base64");
 		const kind = `${mimeType}, ${formatSize(bytes.length)}`;
 		const extension = IMAGE_EXTENSIONS[mimeType];
@@ -429,7 +430,7 @@ async function saveImages(items: (TextContent | ImageContent)[]): Promise<(TextC
 	};
 	const result = await Promise.all(
 		items.map(async (item): Promise<(TextContent | ImageContent)[]> => {
-			if (item.type !== "image") return [item];
+			if (item.type !== "image" || isUrlImage(item)) return [item];
 			let pending = labels.get(item.data);
 			if (!pending) {
 				pending = label(item);

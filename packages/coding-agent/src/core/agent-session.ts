@@ -55,6 +55,7 @@ import {
 	resetApiProviders,
 	streamSimple,
 } from "@earendil-works/pi-ai/compat";
+import { isUrlImage } from "@earendil-works/pi-ai/utils/image-content";
 import { getThemeByName, theme } from "../modes/interactive/theme/theme.ts";
 import { stripFrontmatter } from "../utils/frontmatter.ts";
 import { processImage } from "../utils/image-process.ts";
@@ -2066,6 +2067,10 @@ export class AgentSession {
 		const normalizedImages: ImageContent[] = [];
 		const hints: string[] = [];
 		for (const image of images) {
+			if (isUrlImage(image)) {
+				normalizedImages.push(image);
+				continue;
+			}
 			const processed = await processImage(Buffer.from(image.data, "base64"), image.mimeType, {
 				autoResizeImages: this.settingsManager.getImageAutoResize(),
 				resizeOptions: this._limitsModel()?.inputLimits?.images?.resize,

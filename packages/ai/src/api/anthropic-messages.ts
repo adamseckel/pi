@@ -39,6 +39,7 @@ import { appendAssistantMessageDiagnostic } from "../utils/diagnostics.ts";
 import { AssistantMessageEventStream } from "../utils/event-stream.ts";
 import { headersToRecord } from "../utils/headers.ts";
 import { type ClientIdentity, getIdentityHeaders } from "../utils/identity.ts";
+import { isUrlImage } from "../utils/image-content.ts";
 import { parseJsonWithRepair } from "../utils/json-parse.ts";
 import {
 	applyOpenRouterReportedCost,
@@ -136,6 +137,7 @@ const fromClaudeCodeName = (name: string, tools?: Tool[]) => {
 };
 
 function convertImageBlock(image: ImageContent) {
+	if (isUrlImage(image)) return { type: "image" as const, source: { type: "url" as const, url: image.url } };
 	return {
 		type: "image" as const,
 		source: {
@@ -149,19 +151,9 @@ function convertImageBlock(image: ImageContent) {
 /**
  * Convert content blocks to Anthropic API format
  */
-function convertContentBlocks(content: (TextContent | ImageContent)[]):
-	| string
-	| Array<
-			| { type: "text"; text: string }
-			| {
-					type: "image";
-					source: {
-						type: "base64";
-						media_type: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
-						data: string;
-					};
-			  }
-	  > {
+function convertContentBlocks(
+	content: (TextContent | ImageContent)[],
+): string | Array<Extract<ContentBlockParam, { type: "text" | "image" }>> {
 	// If only text blocks, return as concatenated string for simplicity
 	const hasImages = content.some((c) => c.type === "image");
 	if (!hasImages) {

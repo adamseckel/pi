@@ -3,7 +3,7 @@
  */
 
 import { access, readFile, stat } from "node:fs/promises";
-import type { ImageContent } from "@earendil-works/pi-ai";
+import type { Base64ImageContent } from "@earendil-works/pi-ai";
 import chalk from "chalk";
 import { resolve } from "path";
 import { resolveReadPath } from "../core/tools/path-utils.ts";
@@ -13,7 +13,7 @@ import { stripBom } from "../utils/text.ts";
 
 export interface ProcessedFiles {
 	text: string;
-	images: ImageContent[];
+	images: Base64ImageContent[];
 }
 
 export interface ProcessFileOptions {
@@ -25,7 +25,7 @@ export interface ProcessFileOptions {
 export async function processFileArguments(fileArgs: string[], options?: ProcessFileOptions): Promise<ProcessedFiles> {
 	const autoResizeImages = options?.autoResizeImages ?? true;
 	let text = "";
-	const images: ImageContent[] = [];
+	const images: Base64ImageContent[] = [];
 
 	for (const fileArg of fileArgs) {
 		// Expand and resolve path (handles ~ expansion and macOS screenshot Unicode spaces)
@@ -58,7 +58,7 @@ export async function processFileArguments(fileArgs: string[], options?: Process
 				continue;
 			}
 
-			const attachment: ImageContent = {
+			const attachment: Base64ImageContent = {
 				type: "image",
 				mimeType: processed.mimeType,
 				data: processed.data,

@@ -435,11 +435,19 @@ export interface ThinkingContent {
 	redacted?: boolean;
 }
 
-export interface ImageContent {
+export interface Base64ImageContent {
 	type: "image";
 	data: string; // base64 encoded image data
 	mimeType: string; // e.g., "image/jpeg", "image/png"
 }
+
+/** An image URL passed directly to a provider that supports remote image input. */
+export interface UrlImageContent {
+	type: "image";
+	url: string;
+}
+
+export type ImageContent = Base64ImageContent | UrlImageContent;
 
 export interface ToolCall {
 	type: "toolCall";
@@ -659,7 +667,7 @@ export type ToolResultMessage<TDetails = JsonValue> = IsJsonCompatible<TDetails>
 export type Message = SystemMessage | UserMessage | AssistantMessage | ToolResultMessage;
 
 export type ImagesInputContent = TextContent | ImageContent;
-export type ImagesOutputContent = TextContent | ImageContent;
+export type ImagesOutputContent = TextContent | Base64ImageContent;
 
 export interface ImagesContext {
 	input: ImagesInputContent[];

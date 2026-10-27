@@ -1,4 +1,5 @@
 import type { ImageContent, ModelImageResizeOptions, TextContent } from "@earendil-works/pi-ai";
+import { isUrlImage } from "@earendil-works/pi-ai/utils/image-content";
 import { processImage } from "./image-process.ts";
 
 export type ToolResultContent = TextContent | ImageContent;
@@ -34,7 +35,7 @@ export async function normalizeToolResultImages(
 	let changed = false;
 
 	for (const block of content) {
-		if (block.type !== "image") {
+		if (block.type !== "image" || isUrlImage(block)) {
 			normalized.push(block);
 			continue;
 		}

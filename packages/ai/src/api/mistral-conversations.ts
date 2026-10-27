@@ -19,6 +19,7 @@ import { AssistantMessageEventStream } from "../utils/event-stream.ts";
 import { shortHash } from "../utils/hash.ts";
 import { headersToRecord } from "../utils/headers.ts";
 import { getIdentityHeaders } from "../utils/identity.ts";
+import { getImageUrl } from "../utils/image-content.ts";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.ts";
 import { ToolCallArgumentsStream } from "../utils/streaming-json.ts";
 import { getSystemMessageText, renderSystemMessageUpdate } from "../utils/text.ts";
@@ -797,7 +798,7 @@ function toChatMessages(messages: Message[], supportsImages: boolean): MistralCh
 				.filter((item) => item.type === "text" || supportsImages)
 				.map((item) => {
 					if (item.type === "text") return { type: "text", text: sanitizeSurrogates(item.text) };
-					return { type: "image_url", imageUrl: `data:${item.mimeType};base64,${item.data}` };
+					return { type: "image_url", imageUrl: getImageUrl(item) };
 				});
 			if (content.length > 0) {
 				result.push({ role: "user", content });
@@ -857,7 +858,7 @@ function toChatMessages(messages: Message[], supportsImages: boolean): MistralCh
 			if (part.type !== "image") continue;
 			toolContent.push({
 				type: "image_url",
-				imageUrl: `data:${part.mimeType};base64,${part.data}`,
+				imageUrl: getImageUrl(part),
 			});
 		}
 		result.push({

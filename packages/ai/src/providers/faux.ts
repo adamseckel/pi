@@ -19,6 +19,7 @@ import type {
 	Usage,
 } from "../types.ts";
 import { createAssistantMessageEventStream } from "../utils/event-stream.ts";
+import { isUrlImage } from "../utils/image-content.ts";
 import { ToolCallArgumentsStream } from "../utils/streaming-json.ts";
 import { getSystemMessageText } from "../utils/text.ts";
 
@@ -173,7 +174,7 @@ function contentToText(content: string | Array<TextContent | ImageContent>): str
 			if (block.type === "text") {
 				return block.text;
 			}
-			return `[image:${block.mimeType}:${block.data.length}]`;
+			return isUrlImage(block) ? `[image:${block.url}]` : `[image:${block.mimeType}:${block.data.length}]`;
 		})
 		.join("\n");
 }

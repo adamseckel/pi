@@ -21,11 +21,18 @@ import type {
 	Tool,
 	TranscriptContext,
 } from "../types.ts";
+import { requireBase64Image } from "../utils/image-content.ts";
 import { retryProviderRequest } from "../utils/provider-retry.ts";
 import { sanitizeSurrogates } from "../utils/sanitize-unicode.ts";
 import { collapseSystemMessages, withoutInitialSystemMessage } from "../utils/transcript.ts";
 import { getJsonSchemaToolParameters, resolveJsonSchemaStrictSampling } from "./constrained-sampling.ts";
 import { transformMessages } from "./transform-messages.ts";
+
+/** Convert an inline image, rejecting URL sources without fetching them. */
+function convertImage(image: ImageContent, api: GoogleApiType): Part {
+	const { mimeType, data } = requireBase64Image(image, api);
+	return { inlineData: { mimeType, data } };
+}
 
 type GoogleApiType = "google-generative-ai" | "google-vertex";
 
@@ -213,12 +220,7 @@ export function convertMessages<T extends GoogleApiType>(model: Model<T>, contex
 					if (item.type === "text") {
 						return { text: sanitizeSurrogates(item.text) };
 					} else {
-						return {
-							inlineData: {
-								mimeType: item.mimeType,
-								data: item.data,
-							},
-						};
+						return convertImage(item, model.api);
 					}
 				});
 				if (parts.length === 0) continue;
@@ -302,12 +304,7 @@ export function convertMessages<T extends GoogleApiType>(model: Model<T>, contex
 			// Use "output" key for success, "error" key for errors as per SDK documentation
 			const responseValue = hasText ? sanitizeSurrogates(textResult) : hasImages ? "(see attached image)" : "";
 
-			const imageParts: Part[] = imageContent.map((imageBlock) => ({
-				inlineData: {
-					mimeType: imageBlock.mimeType,
-					data: imageBlock.data,
-				},
-			}));
+			const imageParts = imageContent.map((image) => convertImage(image, model.api));
 
 			const includeId = requiresToolCallId(model.id);
 			const functionResponsePart: Part = {

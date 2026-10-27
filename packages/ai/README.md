@@ -791,6 +791,16 @@ for (const block of response.content) {
 }
 ```
 
+For providers that accept remote images, use a URL instead of inline bytes:
+
+```typescript
+{ type: 'image', url: 'https://example.com/image.png' }
+```
+
+URL images work in user messages and tool results with OpenAI Chat Completions, OpenAI Responses (including Azure and Codex), Anthropic Messages, and Mistral Conversations, and as reference images for OpenRouter image generation. Pi passes the URL through without downloading or resizing it. The provider must be able to fetch the image; its own URL restrictions apply. Google, Bedrock Converse, and classifier adapters currently require base64 images and report an error for URL input. Image generation output remains base64.
+
+`ImageContent` is the union of `Base64ImageContent` and `UrlImageContent`. Code that reads image bytes must narrow the source first, for example with `isUrlImage` from `@earendil-works/pi-ai/utils/image-content`.
+
 ## Image Generation
 
 Image models live in the same `Models` collection and on the same `Provider` as chat models, so one credential per provider covers both. They are typed `ImageModel` with `type: "image"` and are used through `generateImages()`, a one-shot API that waits for the provider response and returns the final `AssistantImages` result. Do not use the chat/stream APIs for them; `stream()` rejects image models.

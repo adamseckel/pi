@@ -189,6 +189,17 @@ function sanitizeSurrogates(text: string): string {
 	return text.replace(/[\uD800-\uDFFF]/g, "\uFFFD");
 }
 
+/** Convert an inline or remote image into Anthropic's native source form. */
+function convertImageBlock(image: ImageContent): Extract<ContentBlockParam, { type: "image" }> {
+	const urlKey = "url" satisfies keyof Extract<ImageContent, { url: string }>;
+	if (urlKey in image) return { type: "image", source: { type: "url", url: image.url } };
+	const { mimeType, data } = image;
+	if (mimeType !== "image/png" && mimeType !== "image/jpeg" && mimeType !== "image/gif" && mimeType !== "image/webp") {
+		throw new Error(`Unsupported image MIME type: ${mimeType}`);
+	}
+	return { type: "image", source: { type: "base64", media_type: mimeType, data } };
+}
+
 function convertContentBlocks(
 	content: (TextContent | ImageContent)[],
 ): string | Array<{ type: "text"; text: string } | { type: "image"; source: any }> {
@@ -201,14 +212,7 @@ function convertContentBlocks(
 		if (block.type === "text") {
 			return { type: "text" as const, text: sanitizeSurrogates(block.text) };
 		}
-		return {
-			type: "image" as const,
-			source: {
-				type: "base64" as const,
-				media_type: block.mimeType,
-				data: block.data,
-			},
-		};
+		return convertImageBlock(block);
 	});
 
 	if (!blocks.some((b) => b.type === "text")) {
@@ -233,10 +237,7 @@ function convertMessages(messages: Message[], isOAuth: boolean, _tools?: Tool[])
 				const blocks: ContentBlockParam[] = msg.content.map((item) =>
 					item.type === "text"
 						? { type: "text" as const, text: sanitizeSurrogates(item.text) }
-						: {
-								type: "image" as const,
-								source: { type: "base64" as const, media_type: item.mimeType as any, data: item.data },
-							},
+						: convertImageBlock(item),
 				);
 				if (blocks.length > 0) {
 					params.push({ role: "user", content: blocks });
